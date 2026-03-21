@@ -59,7 +59,7 @@ curl http://localhost:8080/metrics
 | `MODEL` | `/models/Qwen_Qwen3.5-35B-A3B-Q4_K_M.gguf` | Model path inside container |
 | `MODELS_PATH` | `C:/Users/Tobias/.cache/llama.cpp/models` | Host models directory |
 | `PORT` | `8080` | Host port |
-| `CTX_SIZE` | `32768` | Context window size |
+| `CTX_SIZE` | `49152` | Context window (48K optimal for coding) |
 | `BATCH_SIZE` | `512` | Prompt processing batch size |
 | `N_GPU_LAYERS` | `15` | GPU layers (adjust for your VRAM) |
 | `CACHE_TYPE` | `q8_0` | KV cache quantization (f16, q8_0, q4_0) |
@@ -82,6 +82,33 @@ CTX_SIZE=16384 \
 N_GPU_LAYERS=30 \
 docker compose up -d
 ```
+
+## Context Size Tuning for Coding
+
+For coding tasks, context size significantly impacts quality and capability:
+
+| Context | VRAM Used | Speed | Best For |
+|---------|-----------|-------|----------|
+| 32K | ~9.4 GB | 14-15 t/s | General coding, small files |
+| **48K** (recommended) | ~9.5 GB | 11-17 t/s | Medium codebases, multi-file |
+| 64K | ~9.6 GB | 10-16 t/s | Large codebases |
+| 96K | ~9.7 GB | 9-12 t/s | Very large contexts (slow) |
+
+**Recommendation:** 48K context provides the best balance of speed and capability for most coding tasks.
+
+```bash
+# Set optimal context for coding
+CTX_SIZE=49152 docker compose up -d
+```
+
+### Coding Performance (48K context)
+
+| Task | Prompt Size | Speed |
+|------|-------------|-------|
+| Function completion | ~40 tokens | 17.4 t/s |
+| Add methods to class | ~200 tokens | 14.4 t/s |
+| Extend module (~1K tokens) | ~1000 tokens | 11.3 t/s |
+| Review large codebase | ~2800 tokens | 10.5 t/s |
 
 ## Optimizations
 

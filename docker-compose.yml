@@ -19,9 +19,9 @@ services:
       # GPU offloading (12GB VRAM: ~15 layers for this model)
       - --n-gpu-layers
       - "${N_GPU_LAYERS:-15}"
-      # Context window
+      # Context window (48K recommended for coding)
       - -c
-      - "${CTX_SIZE:-32768}"
+      - "${CTX_SIZE:-49152}"
       # Batch size for prompt processing
       - -b
       - "${BATCH_SIZE:-512}"
