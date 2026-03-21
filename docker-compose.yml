@@ -6,44 +6,33 @@ services:
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
     volumes:
-      - ${MODELS_PATH:-C:/Users/Tobias/.cache/llama.cpp/models}:/models:ro
+      - ${MODELS_PATH:-/home/weiss/.cache/llama.cpp/models}:/models:ro
     ports:
       - "${PORT:-8080}:8080"
     command:
       - -m
-      - ${MODEL:-/models/Qwen_Qwen3.5-35B-A3B-Q4_K_M.gguf}
+      - ${MODEL:-/models/qwen3.5-9b-q4_k_m.gguf}
       - --port
       - "8080"
       - --host
       - "0.0.0.0"
-      # GPU offloading - offload all layers for best performance
+      # GPU offloading - 25 layers (adjust based on your GPU)
       - --n-gpu-layers
-      - "-1"
-      # Context window
+      - "25"
+      # Context window - 32K tokens
       - -c
       - "${CTX_SIZE:-32768}"
-      # Batch size for prompt processing (higher = faster but more VRAM)
-      - -b
-      - "${BATCH_SIZE:-512}"
-      # UB batch size for parallel request handling
-      - --ubatch-size
-      - "${UBATCH_SIZE:-128}"
-      # Use Flash Attention for faster attention computation
-      - -fa
-      # KV cache type - q8_0 for good speed/memory balance
+      # Keep KV cache in CPU RAM to save GPU memory
+      - -nkvo
+      # KV cache quantization - q4_0 for memory efficiency
       - --cache-type-k
-      - "${CACHE_TYPE:-q8_0}"
+      - q4_0
       - --cache-type-v
-      - "${CACHE_TYPE:-q8_0}"
-      # Parallel decoding slots for concurrent requests
-      - -np
-      - "${N_PARALLEL:-1}"
-      # Memory optimization: don't lock mlock in container
-      - --no-mmap
-      # Metrics endpoint for monitoring
-      - --metrics
-      # Continuous batching for better multi-request throughput
-      - --cont-batching
+      - q4_0
+      # Disable warmup for faster startup
+      - --no-warmup
+      # Use Jinja template for Qwen
+      - --jinja
     shm_size: 256m
     deploy:
       resources:
