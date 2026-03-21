@@ -1,0 +1,39 @@
+services:
+  llama-server:
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    container_name: llama-cpp-server
+    restart: unless-stopped
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+      - C:/Users/Tobias/.cache/llama.cpp/models:/models:ro
+    ports:
+      - "8080:8080"
+    command:
+      - -m
+      - /models/Qwen_Qwen3.5-35B-A3B-Q4_K_M.gguf
+      - --port
+      - "8080"
+      - --host
+      - "0.0.0.0"
+      - --n-gpu-layers
+      - "15"
+      - -c
+      - "32768"
+      - --no-warmup
+      - --fit
+      - "off"
+    shm_size: 64m
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 60s
+      timeout: 30s
+      retries: 5
+      start_period: 180s

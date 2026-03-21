@@ -1,0 +1,9 @@
+# Windows artifacts
+nul
+
+# Model files (large)
+models/*.gguf
+models/*.bin
+
+# Keep models directory
+!models/.gitkeep
