@@ -6,24 +6,45 @@ services:
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
     volumes:
-      - C:/Users/Tobias/.cache/llama.cpp/models:/models:ro
+      - ${MODELS_PATH:-C:/Users/Tobias/.cache/llama.cpp/models}:/models:ro
     ports:
-      - "8080:8080"
+      - "${PORT:-8080}:8080"
     command:
       - -m
-      - /models/Qwen_Qwen3.5-35B-A3B-Q4_K_M.gguf
+      - ${MODEL:-/models/Qwen_Qwen3.5-35B-A3B-Q4_K_M.gguf}
       - --port
       - "8080"
       - --host
       - "0.0.0.0"
+      # GPU offloading - offload all layers for best performance
       - --n-gpu-layers
-      - "15"
+      - "-1"
+      # Context window
       - -c
-      - "32768"
-      - --no-warmup
-      - --fit
-      - "off"
-    shm_size: 64m
+      - "${CTX_SIZE:-32768}"
+      # Batch size for prompt processing (higher = faster but more VRAM)
+      - -b
+      - "${BATCH_SIZE:-512}"
+      # UB batch size for parallel request handling
+      - --ubatch-size
+      - "${UBATCH_SIZE:-128}"
+      # Use Flash Attention for faster attention computation
+      - -fa
+      # KV cache type - q8_0 for good speed/memory balance
+      - --cache-type-k
+      - "${CACHE_TYPE:-q8_0}"
+      - --cache-type-v
+      - "${CACHE_TYPE:-q8_0}"
+      # Parallel decoding slots for concurrent requests
+      - -np
+      - "${N_PARALLEL:-1}"
+      # Memory optimization: don't lock mlock in container
+      - --no-mmap
+      # Metrics endpoint for monitoring
+      - --metrics
+      # Continuous batching for better multi-request throughput
+      - --cont-batching
+    shm_size: 256m
     deploy:
       resources:
         reservations:
@@ -33,7 +54,7 @@ services:
               capabilities: [gpu]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 60s
-      timeout: 30s
+      interval: 30s
+      timeout: 10s
       retries: 5
-      start_period: 180s
+      start_period: 120s
