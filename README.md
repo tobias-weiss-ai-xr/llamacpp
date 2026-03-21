@@ -4,7 +4,7 @@ Docker-based llama.cpp server for running quantized LLMs with NVIDIA GPU acceler
 
 ## Model
 
-Currently configured for **Qwen3.5-35B-A3B** with Q4_K_M quantization (~20GB VRAM).
+Currently configured for **Qwen3.5-35B-A3B** with Q4_K_M quantization.
 
 ## Quick Start
 
@@ -61,27 +61,42 @@ curl http://localhost:8080/metrics
 | `PORT` | `8080` | Host port |
 | `CTX_SIZE` | `32768` | Context window size |
 | `BATCH_SIZE` | `512` | Prompt processing batch size |
-| `UBATCH_SIZE` | `128` | Micro-batch size for parallel decoding |
-| `CACHE_TYPE` | `q8_0` | KV cache quantization (q8_0, f16, q4_0) |
-| `N_PARALLEL` | `1` | Parallel decoding slots |
+| `N_GPU_LAYERS` | `15` | GPU layers (adjust for your VRAM) |
+| `CACHE_TYPE` | `q8_0` | KV cache quantization (f16, q8_0, q4_0) |
 
-### VRAM Requirements
+### GPU Layer Guidelines
 
-| Context | Q4_K_M | Q8_0 Cache |
-|---------|--------|------------|
-| 8K | ~18GB | ~20GB |
-| 16K | ~20GB | ~22GB |
-| 32K | ~22GB | ~26GB |
+| GPU VRAM | Recommended Layers |
+|----------|-------------------|
+| 8GB | 8-10 |
+| 12GB | 15-20 |
+| 16GB | 25-30 |
+| 24GB | 35-40 (full offload) |
 
-## Optimizations Applied
+### Example: Custom Configuration
+
+```bash
+# Use a different model with larger context
+MODEL=/models/Llama-3-70B-Q4_K_M.gguf \
+CTX_SIZE=16384 \
+N_GPU_LAYERS=30 \
+docker compose up -d
+```
+
+## Optimizations
 
 Based on [NVIDIA DGX Spark recommendations](https://forums.developer.nvidia.com/t/running-qwen-qwen3-5-35b-a3b-fp8-on-a-cluster/364168/5):
 
-- **Flash Attention** (`-fa`): Faster attention computation
-- **Continuous Batching** (`--cont-batching`): Better multi-request throughput
-- **KV Cache Quantization** (`q8_0`): Reduces memory usage vs FP16
-- **Full GPU Offload** (`-1` layers): All model layers on GPU
-- **Metrics** (`--metrics`): Prometheus-compatible metrics endpoint
+- **KV Cache Quantization** (`q8_0`): Reduces memory usage vs FP16 with minimal quality loss
+- **Batch Processing** (`512`): Optimized prompt processing throughput
+- **Metrics Endpoint** (`--metrics`): Prometheus-compatible monitoring
+
+## Performance Notes
+
+The Qwen3.5-35B-A3B is a Mixture-of-Experts (MoE) model with:
+- 256 experts, 8 active per token
+- ~35B total parameters, ~3.5B active per inference
+- Enables efficient inference on consumer GPUs
 
 ## Adding Models
 
@@ -91,6 +106,16 @@ Based on [NVIDIA DGX Spark recommendations](https://forums.developer.nvidia.com/
 ```bash
 MODEL=/models/your-model.gguf docker compose up -d
 ```
+
+## Troubleshooting
+
+### Model loading stuck
+- Pull the latest image: `docker pull ghcr.io/ggml-org/llama.cpp:server-cuda`
+- Reduce `N_GPU_LAYERS` if you get OOM errors
+
+### Slow inference
+- Increase `N_GPU_LAYERS` to offload more to GPU
+- Reduce `CTX_SIZE` if memory constrained
 
 ## Stopping
 

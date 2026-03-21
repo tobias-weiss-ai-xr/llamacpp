@@ -16,34 +16,22 @@ services:
       - "8080"
       - --host
       - "0.0.0.0"
-      # GPU offloading - offload all layers for best performance
+      # GPU offloading (12GB VRAM: ~15 layers for this model)
       - --n-gpu-layers
-      - "-1"
+      - "${N_GPU_LAYERS:-15}"
       # Context window
       - -c
       - "${CTX_SIZE:-32768}"
-      # Batch size for prompt processing (higher = faster but more VRAM)
+      # Batch size for prompt processing
       - -b
       - "${BATCH_SIZE:-512}"
-      # UB batch size for parallel request handling
-      - --ubatch-size
-      - "${UBATCH_SIZE:-128}"
-      # Use Flash Attention for faster attention computation
-      - -fa
-      # KV cache type - q8_0 for good speed/memory balance
+      # KV cache quantization - reduces memory usage
       - --cache-type-k
       - "${CACHE_TYPE:-q8_0}"
       - --cache-type-v
       - "${CACHE_TYPE:-q8_0}"
-      # Parallel decoding slots for concurrent requests
-      - -np
-      - "${N_PARALLEL:-1}"
-      # Memory optimization: don't lock mlock in container
-      - --no-mmap
       # Metrics endpoint for monitoring
       - --metrics
-      # Continuous batching for better multi-request throughput
-      - --cont-batching
     shm_size: 256m
     deploy:
       resources:
@@ -57,4 +45,4 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 120s
+      start_period: 180s
