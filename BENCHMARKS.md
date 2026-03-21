@@ -72,8 +72,8 @@
 
 ## GPU Memory Comparison
 
-| Metric | Current (RTX 4080) | Old Legion (RTX 4090 6GB) |
-|--------|-------------------|---------------------------|
+| Metric | Current (RTX 4080) | Old Legion (RTX 2060 6GB) |
+|--------|-------------------|----------------------------|
 | Total VRAM | 12,282 MB | 6,144 MB |
 | Used | 9,431 MB (77%) | 4,688 MB (76%) |
 | Free | 2,565 MB (21%) | 1,045 MB (17%) |
