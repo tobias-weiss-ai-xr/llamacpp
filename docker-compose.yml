@@ -16,15 +16,15 @@ services:
       - "8080"
       - --host
       - "0.0.0.0"
-      # GPU offloading (12GB VRAM: 20 layers optimal, 15 conservative)
+      # GPU offloading (15 layers - best speed/memory balance)
       - --n-gpu-layers
-      - "${N_GPU_LAYERS:-20}"
+      - "${N_GPU_LAYERS:-15}"
       # Context window (48K recommended for coding)
       - -c
       - "${CTX_SIZE:-49152}"
-      # Batch size - reduced to 256 to avoid KV cache pressure
+      # Batch size (512 for optimal throughput)
       - -b
-      - "${BATCH_SIZE:-256}"
+      - "${BATCH_SIZE:-512}"
       # Parallel slots (1 slot = full 48K context per request)
       - -np
       - "${N_PARALLEL:-1}"
@@ -33,9 +33,9 @@ services:
       - "${CACHE_TYPE:-q8_0}"
       - --cache-type-v
       - "${CACHE_TYPE:-q8_0}"
-      # Limit context checkpoint cache to 2GB
+      # Disable prompt cache (SWA invalidates it immediately - just adds latency)
       - --cache-ram
-      - "${CACHE_RAM:-2048}"
+      - "0"
       # Metrics endpoint for monitoring
       - --metrics
     shm_size: 256m
