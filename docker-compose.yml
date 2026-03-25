@@ -16,20 +16,26 @@ services:
       - "8080"
       - --host
       - "0.0.0.0"
-      # GPU offloading (12GB VRAM: ~15 layers for this model)
+      # GPU offloading (12GB VRAM: 20 layers optimal, 15 conservative)
       - --n-gpu-layers
-      - "${N_GPU_LAYERS:-15}"
+      - "${N_GPU_LAYERS:-20}"
       # Context window (48K recommended for coding)
       - -c
       - "${CTX_SIZE:-49152}"
-      # Batch size for prompt processing
+      # Batch size - reduced to 256 to avoid KV cache pressure
       - -b
-      - "${BATCH_SIZE:-512}"
+      - "${BATCH_SIZE:-256}"
+      # Parallel slots - limit to 2 for stability with large context
+      - -np
+      - "${N_PARALLEL:-2}"
       # KV cache quantization - reduces memory usage
       - --cache-type-k
       - "${CACHE_TYPE:-q8_0}"
       - --cache-type-v
       - "${CACHE_TYPE:-q8_0}"
+      # Limit context checkpoint cache to 2GB
+      - --cache-ram
+      - "${CACHE_RAM:-2048}"
       # Metrics endpoint for monitoring
       - --metrics
     shm_size: 256m
