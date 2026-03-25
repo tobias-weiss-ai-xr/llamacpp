@@ -25,9 +25,9 @@ services:
       # Batch size - reduced to 256 to avoid KV cache pressure
       - -b
       - "${BATCH_SIZE:-256}"
-      # Parallel slots - limit to 2 for stability with large context
+      # Parallel slots (1 slot = full 48K context per request)
       - -np
-      - "${N_PARALLEL:-2}"
+      - "${N_PARALLEL:-1}"
       # KV cache quantization - reduces memory usage
       - --cache-type-k
       - "${CACHE_TYPE:-q8_0}"
